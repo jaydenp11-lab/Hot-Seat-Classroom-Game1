@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100 font-sans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Topic Master - Hot Seat Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            cyan: '#06b6d4',
+                            pink: '#ec4899',
+                            purple: '#8b5cf6',
+                            emerald: '#10b981',
+                            amber: '#f59e0b'
+                        }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+        }
+        .text-glow-amber {
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col justify-between overflow-x-hidden bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-black">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- Header / Navbar -->
+    <header class="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 sticky top-0 z-30 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="app.showScreen('menu')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <i class="fa-solid fa-graduation-cap text-slate-950 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
+                    TOPIC MASTER
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Hot Seat Classroom Game</p>
+            </div>
+        </div>
+
+        <!-- Right Header Action Controls -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <button onclick="app.toggleSound()" id="soundBtn" class="p-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center space-x-2 text-xs font-semibold" title="Toggle Audio (M)">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-cyan-400"></i>
+                <span class="hidden sm:inline">Sound</span>
+            </button>
+            <button onclick="app.toggleMusic()" id="musicBtn" class="p-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center space-x-2 text-xs font-semibold" title="Toggle Menu Music (B)">
+                <i id="musicIcon" class="fa-solid fa-music text-purple-400"></i>
+                <span class="hidden sm:inline">Music</span>
+            </button>
+            <button onclick="app.openRulesModal()" class="p-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center space-x-2 text-xs font-semibold">
+                <i class="fa-solid fa-book-open text-amber-400"></i>
+                <span class="hidden sm:inline">How to Play</span>
+            </button>
+            <button onclick="app.openCustomDeckModal()" class="p-2.5 px-3 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 transition border border-indigo-500/40 flex items-center space-x-2 text-xs font-semibold">
+                <i class="fa-solid fa-plus text-indigo-400"></i>
+                <span class="hidden sm:inline">Custom Decks</span>
+            </button>
+            <button onclick="app.toggleFullscreen()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Scoreboard Dock -->
+    <section id="scoreboardSection" class="w-full bg-slate-900 border-b border-slate-800/80 px-4 py-2 transition-all duration-300">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center space-x-2 text-xs text-slate-400 uppercase tracking-wider font-bold">
+                <i class="fa-solid fa-trophy text-amber-400"></i>
+                <span>Classroom Scoreboard</span>
+                <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] font-black">Target: 10,000 Pts</span>
+            </div>
+            
+            <div id="teamsContainer" class="flex flex-wrap items-center gap-2 sm:gap-4 my-1">
+                <!-- Dynamic Teams JS Rendered -->
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="app.adjustTeamCount(-1)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 font-bold" title="Remove Team">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <span id="teamCountLabel" class="text-xs font-bold text-slate-300">2 Teams</span>
+                <button onclick="app.adjustTeamCount(1)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold" title="Add Team">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button onclick="app.openTeamRenameModal()" class="px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center space-x-1" title="Rename Teams">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Rename</span>
+                </button>
+                <button onclick="app.resetScores()" class="ml-1 px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-500/30">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Dynamic Content Wrapper -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center items-center relative">
+
+        <!-- 1. DASHBOARD / MENU SCREEN -->
+        <div id="menuScreen" class="w-full max-w-5xl space-y-6">
+            <!-- Hot Seat Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/80 to-slate-900 border-2 border-cyan-500/40 p-6 sm:p-8 shadow-2xl shadow-cyan-950/40 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 max-w-2xl">
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-black uppercase tracking-widest">
+                        <i class="fa-solid fa-fire text-amber-400"></i>
+                        <span>Classroom Heads-Up Game</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black text-white font-heading tracking-tight text-glow-cyan">
+                        HOT SEAT MASTER
+                    </h2>
+                    <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                        One student sits facing the class with their back to the board. The rest of the class gives descriptive clues without saying the secret word before time runs out!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 shrink-0 bg-slate-950/60 p-3 rounded-2xl border border-slate-800 text-center w-full sm:w-auto">
+                    <div class="p-2 space-y-1">
+                        <i class="fa-solid fa-chair text-cyan-400 text-lg"></i>
+                        <span class="block text-[10px] font-extrabold uppercase text-slate-300">1. Sit</span>
+                    </div>
+                    <div class="p-2 space-y-1">
+                        <i class="fa-solid fa-comments text-amber-400 text-lg"></i>
+                        <span class="block text-[10px] font-extrabold uppercase text-slate-300">2. Clue</span>
+                    </div>
+                    <div class="p-2 space-y-1">
+                        <i class="fa-solid fa-stopwatch text-emerald-400 text-lg"></i>
+                        <span class="block text-[10px] font-extrabold uppercase text-slate-300">3. Guess</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deck Selector Grid -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="text-base font-extrabold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-cyan-400"></i>
+                        <span>Select Topic Deck</span>
+                    </h3>
+                    <span id="deckCountBadge" class="text-xs text-slate-400 font-semibold bg-slate-900 px-3 py-1 rounded-lg border border-slate-800">9 Preset Decks</span>
+                </div>
+
+                <div id="deckGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-3">
+                    <!-- Dynamic Deck Cards JS Rendered -->
+                </div>
+            </div>
+
+            <!-- Game Setup Console -->
+            <div class="bg-slate-900/90 p-5 rounded-3xl border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <!-- Active Playing Team Picker -->
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                        <i class="fa-solid fa-users text-base"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Playing Team</span>
+                        <div id="activeTeamPicker" class="flex flex-wrap items-center gap-1.5 mt-1">
+                            <!-- Dynamic Team Picker Buttons -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Duration Selector -->
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <i class="fa-solid fa-stopwatch text-base"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Round Timer</span>
+                        <div class="flex items-center space-x-1 mt-1">
+                            <button onclick="app.setTimerDuration(30)" class="timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-time="30">30s</button>
+                            <button onclick="app.setTimerDuration(60)" class="timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-cyan-600 text-white border border-cyan-400 shadow-lg shadow-cyan-500/20" data-time="60">60s</button>
+                            <button onclick="app.setTimerDuration(90)" class="timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-time="90">90s</button>
+                            <button onclick="app.setTimerDuration(120)" class="timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-time="120">120s</button>
+                            <button onclick="app.setTimerDuration(0)" class="timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-time="0">∞</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Big Launch Hot Seat Button -->
+                <button onclick="app.startGame()" class="w-full md:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-lg tracking-wider uppercase shadow-xl shadow-cyan-500/30 active:scale-95 transition transform flex items-center justify-center space-x-3 border border-cyan-300/40">
+                    <i class="fa-solid fa-play text-xl"></i>
+                    <span>Launch Hot Seat</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. HOT SEAT SCREEN -->
+        <div id="hotseatScreen" class="hidden w-full max-w-5xl flex-col items-center justify-between space-y-6">
+            <!-- Active Game Header Bar -->
+            <div class="w-full flex items-center justify-between bg-slate-900/80 px-5 py-3 rounded-2xl border border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <span id="activeDeckBadge" class="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-extrabold uppercase">
+                        Science &amp; Tech
+                    </span>
+                    <span id="activeTeamHeaderBadge" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-extrabold">
+                        Team Alpha
+                    </span>
+                </div>
+
+                <!-- Timer & Finish Controls -->
+                <div class="flex items-center space-x-3">
+                    <div class="text-right">
+                        <span id="timerDisplay" class="text-3xl font-black tracking-mono text-amber-400 font-heading">60s</span>
+                    </div>
+                    <button onclick="app.toggleTimerPause()" id="pauseBtn" class="p-2 w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700" title="Pause Timer (P)">
+                        <i class="fa-solid fa-pause"></i>
+                    </button>
+                    <button onclick="app.finishRound()" class="px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition flex items-center space-x-1.5" title="Finish Round & Save Score">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                        <span class="hidden sm:inline">Finish Round</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Big Main Word Display Box -->
+            <div class="w-full py-12 px-6 sm:px-12 bg-slate-900/90 rounded-3xl border-2 border-cyan-500/40 shadow-2xl shadow-cyan-950/50 flex flex-col items-center justify-center min-h-[300px] sm:min-h-[380px] relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none"></div>
+                
+                <span class="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Class Sees Topic — Guesser Faces Away</span>
+                
+                <h2 id="hotseatWord" class="text-4xl sm:text-6xl md:text-7xl font-black text-center text-white font-heading tracking-wide text-glow-cyan my-auto leading-tight transition-all">
+                    READY TO PLAY
+                </h2>
+
+                <div id="hotseatPassInfo" class="mt-4 text-xs font-semibold text-slate-400 flex items-center space-x-4">
+                    <span>Passed: <strong id="hotseatPassedCount" class="text-slate-200">0</strong></span>
+                    <span>•</span>
+                    <span>Guessed: <strong id="hotseatCorrectCount" class="text-emerald-400">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Action Touch Controls -->
+            <div class="w-full grid grid-cols-2 gap-4">
+                <button onclick="app.passHotseatWord()" class="py-5 rounded-2xl bg-slate-900 hover:bg-slate-800 border-2 border-rose-500/50 text-rose-400 hover:text-rose-300 font-black text-xl uppercase tracking-wider flex items-center justify-center space-x-3 shadow-lg active:scale-95 transition">
+                    <i class="fa-solid fa-forward text-2xl"></i>
+                    <span>Pass [ Left ← ]</span>
+                </button>
+                <button onclick="app.correctHotseatWord()" class="py-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-400 text-slate-950 font-black text-xl uppercase tracking-wider flex items-center justify-center space-x-3 shadow-lg shadow-emerald-600/30 active:scale-95 transition">
+                    <i class="fa-solid fa-circle-check text-2xl"></i>
+                    <span>Got It! (+100) [ Right → ]</span>
+                </button>
+            </div>
+
+            <!-- Keyboard shortcut hint footer -->
+            <div class="text-xs text-slate-400 flex flex-wrap items-center justify-center gap-4 pt-2">
+                <span><kbd class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 font-mono">SPACE</kbd> Pass</span>
+                <span><kbd class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-emerald-300 font-mono">→</kbd> Correct</span>
+                <span><kbd class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-rose-300 font-mono">←</kbd> Pass</span>
+                <span><kbd class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-amber-300 font-mono">P</kbd> Pause</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Round Summary Modal -->
+    <div id="roundSummaryModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center text-3xl font-black shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white font-heading">Round Completed!</h3>
+                <p class="text-xs text-slate-400 font-medium">Topic round performance breakdown</p>
+            </div>
+
+            <!-- Performance Stats Grid -->
+            <div class="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800/80">
+                <div class="text-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                    <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Correct Answers</span>
+                    <span id="summaryCorrect" class="text-2xl font-black text-emerald-400 font-heading">0</span>
+                </div>
+                <div class="text-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                    <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Passed / Missed</span>
+                    <span id="summaryPassed" class="text-2xl font-black text-rose-400 font-heading">0</span>
+                </div>
+                <div class="col-span-2 text-center p-4 rounded-xl bg-gradient-to-r from-cyan-950/60 to-indigo-950/60 border border-cyan-500/30">
+                    <span class="text-xs font-extrabold uppercase text-cyan-300 block">Round Score Gained</span>
+                    <span id="summaryRoundScore" class="text-4xl font-black text-amber-400 font-heading text-glow-amber">+0 Pts</span>
+                </div>
+            </div>
+
+            <!-- Target Team Selector -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-300 text-center">Assign Score To Team:</label>
+                <div id="summaryTeamSelector" class="flex flex-wrap items-center justify-center gap-2">
+                    <!-- Dynamic Team buttons -->
+                </div>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                <button onclick="app.discardRoundAndReturn()" class="w-full sm:w-1/3 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">
+                    Discard &amp; Menu
+                </button>
+                <button onclick="app.saveRoundScoreAndReturn()" class="w-full sm:w-2/3 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm uppercase tracking-wide shadow-lg shadow-emerald-500/25 transition active:scale-95 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Save Score &amp; Menu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Champion Modal -->
+    <div id="winnerModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 border-2 border-amber-400/60 w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl shadow-amber-500/20 text-center space-y-6 relative overflow-hidden">
+            <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 text-slate-950 flex items-center justify-center text-4xl font-black shadow-xl shadow-amber-500/40 animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <div class="space-y-2">
+                <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-black uppercase tracking-widest">
+                    🎉 CLASSROOM CHAMPION 🎉
+                </span>
+                <h2 id="winnerTeamName" class="text-3xl sm:text-5xl font-black text-white font-heading tracking-tight text-glow-amber">
+                    TEAM ALPHA WINS!
+                </h2>
+                <p id="winnerScoreSubtext" class="text-sm text-amber-200/80 font-bold">
+                    First to cross 10,000 points!
+                </p>
+            </div>
+
+            <!-- Final Leaderboard Breakdown -->
+            <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-2 text-left">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 block text-center mb-1">Final Standings</span>
+                <div id="winnerStandingsList" class="space-y-1.5 text-xs">
+                    <!-- Dynamic Standings JS Rendered -->
+                </div>
+            </div>
+
+            <button onclick="app.closeWinnerModalAndReset()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-base uppercase tracking-wider shadow-xl shadow-amber-500/30 transition active:scale-95 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-rotate-right text-lg"></i>
+                <span>Start New Game (Reset Scores)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Team Rename Modal -->
+    <div id="teamRenameModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 rounded-xl bg-cyan-500/20 text-cyan-400">
+                        <i class="fa-solid fa-users-gear text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Customize Team Names</h3>
+                </div>
+                <button onclick="app.closeTeamRenameModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="teamRenameInputs" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- Dynamic Team Name Inputs JS Rendered -->
+            </div>
+
+            <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+                <button onclick="app.closeTeamRenameModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">
+                    Cancel
+                </button>
+                <button onclick="app.saveTeamNames()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wide shadow-lg shadow-cyan-500/20">
+                    Save Names
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Deck Creator Modal -->
+    <div id="customDeckModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
+                        <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Custom Topic Deck Creator</h3>
+                </div>
+                <button onclick="app.closeCustomDeckModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">Deck Name</label>
+                    <input type="text" id="customDeckName" placeholder="e.g. Chapter 4 Biology Terms" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-indigo-500 text-sm">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">Topics (1 per line)</label>
+                    <textarea id="customDeckItems" rows="8" placeholder="Photosynthesis&#10;Gravity&#10;Renewable Energy" class="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono text-xs focus:outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <button onclick="app.clearCustomDecks()" class="text-xs text-rose-400 hover:text-rose-300 font-semibold">
+                    Delete All Custom Decks
+                </button>
+                <div class="flex space-x-3">
+                    <button onclick="app.closeCustomDeckModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">Cancel</button>
+                    <button onclick="app.saveCustomDeck()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30">Save Deck</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">How To Play in the Classroom</h3>
+                </div>
+                <button onclick="app.closeRulesModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                    <h4 class="font-bold text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-fire"></i> Hot Seat Rules
+                    </h4>
+                    <p class="text-slate-400 text-xs">Place a chair in front of the classroom facing away from the projector. One student sits in the Hot Seat. The rest of the class shouts out descriptive clues (without saying the secret word) before the timer runs out!</p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 text-xs text-slate-400 space-y-1">
+                    <span class="font-bold text-slate-200">⌨️ Keyboard Shortcuts:</span>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400">
+                        <li><kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">Right Arrow (→)</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">C</kbd> - Mark Correct (+100)</li>
+                        <li><kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">Left Arrow (←)</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">X</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">Space</kbd> - Pass</li>
+                        <li><kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">P</kbd> - Pause / Resume Timer</li>
+                        <li><kbd class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200">M</kbd> - Mute Audio</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-800">
+                <button onclick="app.closeRulesModal()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs">
+                    Got It!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Box -->
+    <div id="toastNotification" class="fixed bottom-4 right-4 z-50 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-2xl shadow-xl hidden flex items-center space-x-3 transition-all duration-300">
+        <i id="toastIcon" class="fa-solid fa-circle-info text-cyan-400 text-lg"></i>
+        <span id="toastMessage" class="text-xs font-semibold">Notification</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-slate-900 py-3 px-4 text-center text-xs text-slate-500">
+        <span>Classroom Topic Master • Projector-Friendly Interactive Game</span>
+    </footer>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        // Web Audio Synthesizer
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.bgmMuted = false;
+                this.bgmTimer = null;
+                this.bgmStep = 0;
+                this.isBgmRunning = false;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            toggle() {
+                this.muted = !this.muted;
+                if (this.muted) {
+                    this.stopMenuBGM();
+                } else if (window.app && window.app.currentScreen === 'menu') {
+                    this.startMenuBGM();
+                }
+                return this.muted;
+            }
+            toggleBGM() {
+                this.bgmMuted = !this.bgmMuted;
+                if (this.bgmMuted) {
+                    this.stopMenuBGM();
+                } else {
+                    this.startMenuBGM();
+                }
+                return !this.bgmMuted;
+            }
+            startMenuBGM() {
+                if (this.muted || this.bgmMuted || this.isBgmRunning) return;
+                this.init();
+                if (!this.ctx) return;
+
+                this.isBgmRunning = true;
+                this.bgmStep = 0;
+
+                // Melodic upbeat arpeggio frequencies (Hz)
+                const notes = [
+                    261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 523.25, 659.25,
+                    220.00, 261.63, 329.63, 440.00, 329.63, 261.63, 440.00, 523.25,
+                    174.61, 220.00, 261.63, 349.23, 261.63, 220.00, 349.23, 440.00,
+                    196.00, 246.94, 293.66, 392.00, 293.66, 246.94, 392.00, 493.88
+                ];
+
+                const bassNotes = [130.81, 130.81, 110.00, 110.00, 87.31, 87.31, 98.00, 98.00];
+
+                this.bgmTimer = setInterval(() => {
+                    if (this.muted || this.bgmMuted) return;
+                    if (this.ctx && this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+
+                    // Synth lead note
+                    const freq = notes[this.bgmStep % notes.length];
+                    this.playSynthNote(freq, 'triangle', 0.16, 0.035);
+
+                    // Bass pulse
+                    if (this.bgmStep % 2 === 0) {
+                        const bassIdx = Math.floor((this.bgmStep % notes.length) / 4);
+                        const bassFreq = bassNotes[bassIdx % bassNotes.length];
+                        this.playSynthNote(bassFreq, 'sine', 0.2, 0.06);
+                    }
+
+                    this.bgmStep++;
+                }, 185);
+            }
+            stopMenuBGM() {
+                this.isBgmRunning = false;
+                if (this.bgmTimer) {
+                    clearInterval(this.bgmTimer);
+                    this.bgmTimer = null;
+                }
+            }
+            playSynthNote(freq, type, duration, vol = 0.05) {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            playTone(freq, type, duration, vol = 0.1) {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            playCorrect() {
+                if (this.muted) return;
+                this.playTone(523.25, 'sine', 0.1, 0.15);
+                setTimeout(() => this.playTone(659.25, 'sine', 0.1, 0.15), 80);
+                setTimeout(() => this.playTone(783.99, 'sine', 0.2, 0.2), 160);
+            }
+            playPass() {
+                if (this.muted) return;
+                this.playTone(300, 'sawtooth', 0.12, 0.1);
+                setTimeout(() => this.playTone(200, 'sawtooth', 0.18, 0.1), 100);
+            }
+            playTick() {
+                if (this.muted) return;
+                this.playTone(800, 'sine', 0.03, 0.05);
+            }
+            playFanfare() {
+                if (this.muted) return;
+                const notes = [440, 554.37, 659.25, 880];
+                notes.forEach((n, i) => setTimeout(() => this.playTone(n, 'triangle', 0.25, 0.2), i * 120));
+            }
+        }
+
+        // Particle Victory Confetti
+        class Confetti {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+                this.particles = [];
+                this.animating = false;
+                if (this.canvas) {
+                    this.resize();
+                    window.addEventListener('resize', () => this.resize());
+                }
+            }
+            resize() {
+                if (!this.canvas) return;
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            fire() {
+                if (!this.canvas || !this.ctx) return;
+                this.resize();
+                this.particles = [];
+                const colors = ['#06b6d4', '#ec4899', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'];
+                for (let i = 0; i < 90; i++) {
+                    this.particles.push({
+                        x: this.canvas.width / 2,
+                        y: this.canvas.height / 2,
+                        vx: (Math.random() - 0.5) * 16,
+                        vy: (Math.random() - 0.7) * 16,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        size: Math.random() * 8 + 4,
+                        rotation: Math.random() * 360,
+                        rSpeed: (Math.random() - 0.5) * 10,
+                        opacity: 1
+                    });
+                }
+                if (!this.animating) {
+                    this.animating = true;
+                    this.loop();
+                }
+            }
+            loop() {
+                if (!this.animating || !this.ctx) return;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                let active = false;
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3;
+                    p.rotation += p.rSpeed;
+                    p.opacity -= 0.012;
+                    if (p.opacity > 0) {
+                        active = true;
+                        this.ctx.save();
+                        this.ctx.globalAlpha = Math.max(0, p.opacity);
+                        this.ctx.translate(p.x, p.y);
+                        this.ctx.rotate((p.rotation * Math.PI) / 180);
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                        this.ctx.restore();
+                    }
+                });
+                if (active) {
+                    requestAnimationFrame(() => this.loop());
+                } else {
+                    this.animating = false;
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+        }
+
+        // Main Classroom Game Application
+        class ClassroomGameApp {
+            constructor() {
+                this.sound = new SoundFX();
+                this.confetti = new Confetti('confettiCanvas');
+
+                this.currentScreen = 'menu';
+                this.selectedDeckKey = 'science';
+                this.activeItems = [];
+                this.currentIndex = 0;
+
+                this.timerDuration = 60;
+                this.timerLeft = 60;
+                this.timerInterval = null;
+                this.isPaused = false;
+
+                this.winningScore = 10000;
+
+                this.teams = [
+                    { name: 'Team Alpha', score: 0 },
+                    { name: 'Team Beta', score: 0 }
+                ];
+                this.activePlayingTeamIndex = 0;
+                this.targetAwardTeamIndex = 0;
+                this.roundScore = 0;
+
+                this.hotseatCorrect = 0;
+                this.hotseatPassed = 0;
+
+                this.customDecks = this.loadCustomDecks();
+            }
+
+            init() {
+                this.renderDecks();
+                this.renderScoreboard();
+                this.renderActiveTeamPicker();
+                this.setupKeyboardListeners();
+                this.showScreen('menu');
+
+                // Enable Web Audio BGM on first user interaction (browser audio policy)
+                const unlockAudio = () => {
+                    this.sound.init();
+                    if (this.currentScreen === 'menu') {
+                        this.sound.startMenuBGM();
+                    }
+                    window.removeEventListener('click', unlockAudio);
+                    window.removeEventListener('keydown', unlockAudio);
+                    window.removeEventListener('touchstart', unlockAudio);
+                };
+                window.addEventListener('click', unlockAudio);
+                window.addEventListener('keydown', unlockAudio);
+                window.addEventListener('touchstart', unlockAudio);
+            }
+
+            toggleMusic() {
+                const isMusicOn = this.sound.toggleBGM();
+                const icon = document.getElementById('musicIcon');
+                if (icon) {
+                    icon.className = isMusicOn 
+                        ? 'fa-solid fa-music text-purple-400' 
+                        : 'fa-solid fa-music-slash text-slate-500';
+                }
+                this.showToast(isMusicOn ? 'Menu Music Enabled' : 'Menu Music Paused', 'info');
+            }
+
+            // Teams & Scoreboard Management
+            adjustTeamCount(delta) {
+                if (delta > 0 && this.teams.length < 6) {
+                    const defaultNames = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta'];
+                    const name = defaultNames[this.teams.length] || `Team ${this.teams.length + 1}`;
+                    this.teams.push({ name: `Team ${name}`, score: 0 });
+                } else if (delta < 0 && this.teams.length > 1) {
+                    this.teams.pop();
+                    if (this.activePlayingTeamIndex >= this.teams.length) {
+                        this.activePlayingTeamIndex = 0;
+                    }
+                }
+                this.renderScoreboard();
+                this.renderActiveTeamPicker();
+            }
+
+            resetScores() {
+                this.teams.forEach(t => t.score = 0);
+                this.renderScoreboard();
+                this.showToast('Scores reset to 0', 'info');
+            }
+
+            renderScoreboard() {
+                const container = document.getElementById('teamsContainer');
+                const countLabel = document.getElementById('teamCountLabel');
+                if (countLabel) countLabel.textContent = `${this.teams.length} ${this.teams.length === 1 ? 'Team' : 'Teams'}`;
+                if (!container) return;
+
+                const colors = [
+                    'from-cyan-500/20 to-blue-500/20 border-cyan-500/40 text-cyan-300 hover:border-cyan-400',
+                    'from-pink-500/20 to-rose-500/20 border-pink-500/40 text-pink-300 hover:border-pink-400',
+                    'from-amber-500/20 to-orange-500/20 border-amber-500/40 text-amber-300 hover:border-amber-400',
+                    'from-emerald-500/20 to-teal-500/20 border-emerald-500/40 text-emerald-300 hover:border-emerald-400',
+                    'from-purple-500/20 to-indigo-500/20 border-purple-500/40 text-purple-300 hover:border-purple-400',
+                    'from-fuchsia-500/20 to-pink-500/20 border-fuchsia-500/40 text-fuchsia-300 hover:border-fuchsia-400'
+                ];
+
+                container.innerHTML = this.teams.map((t, idx) => `
+                    <div onclick="app.openTeamRenameModal(${idx})" class="px-3 py-1.5 rounded-xl bg-gradient-to-r ${colors[idx % colors.length]} border flex items-center space-x-2 text-xs font-bold shadow-sm cursor-pointer transition transform hover:scale-105" title="Click to edit team name">
+                        <span>${t.name}:</span>
+                        <span class="text-sm font-black text-white font-heading">${t.score}</span>
+                        <i class="fa-solid fa-pen text-[10px] opacity-60 ml-0.5"></i>
+                    </div>
+                `).join('');
+            }
+
+            openTeamRenameModal(focusIdx = 0) {
+                const container = document.getElementById('teamRenameInputs');
+                if (!container) return;
+
+                container.innerHTML = this.teams.map((t, idx) => `
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase">Team ${idx + 1}</label>
+                        <input type="text" id="teamInput_${idx}" value="${t.name.replace(/"/g, '&quot;')}" placeholder="Team Name" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-semibold text-sm focus:outline-none focus:border-cyan-500">
+                    </div>
+                `).join('');
+
+                const modal = document.getElementById('teamRenameModal');
+                if (modal) modal.classList.remove('hidden');
+
+                setTimeout(() => {
+                    const focusInput = document.getElementById(`teamInput_${focusIdx}`);
+                    if (focusInput) focusInput.select();
+                }, 100);
+            }
+
+            closeTeamRenameModal() {
+                const modal = document.getElementById('teamRenameModal');
+                if (modal) modal.classList.add('hidden');
+            }
+
+            saveTeamNames() {
+                this.teams.forEach((t, idx) => {
+                    const input = document.getElementById(`teamInput_${idx}`);
+                    if (input && input.value.trim().length > 0) {
+                        t.name = input.value.trim();
+                    }
+                });
+
+                this.renderScoreboard();
+                this.renderActiveTeamPicker();
+                this.closeTeamRenameModal();
+                this.showToast('Team names updated!', 'success');
+            }
+
+            renderActiveTeamPicker() {
+                const picker = document.getElementById('activeTeamPicker');
+                if (!picker) return;
+
+                picker.innerHTML = this.teams.map((t, idx) => `
+                    <button onclick="app.selectActiveTeam(${idx})" class="px-3 py-1 rounded-lg text-xs font-bold transition border ${
+                        this.activePlayingTeamIndex === idx 
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-300 shadow-md shadow-cyan-500/20' 
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }">
+                        ${t.name}
+                    </button>
+                `).join('');
+            }
+
+            selectActiveTeam(idx) {
+                if (idx >= 0 && idx < this.teams.length) {
+                    this.activePlayingTeamIndex = idx;
+                    this.renderActiveTeamPicker();
+                }
+            }
+
+            // Decks Engine
+            getPresetDecks() {
+                return {
+                    science: {
+                        name: 'Science & Tech',
+                        icon: 'fa-atom',
+                        color: 'from-cyan-500/20 to-blue-600/20 border-cyan-500/40 text-cyan-300',
+                        items: [
+                            'Photosynthesis', 'Gravity', 'DNA', 'Atom', 'Black Hole',
+                            'Solar System', 'Electricity', 'Telescope', 'Microscope', 'Evaporation',
+                            'Fossil', 'Plate Tectonics', 'Renewable Energy', 'Velocity', 'Ecosystem',
+                            'Element', 'Molecules', 'Vaccine', 'Magnetism', 'Atmosphere',
+                            'Supernova', 'Cell Membrane', 'Mitosis', 'Quantum Mechanics', 'Robot',
+                            'Artificial Intelligence', 'Algorithm', 'Laboratory', 'Satellite', 'Biodiversity'
+                        ]
+                    },
+                    popculture: {
+                        name: 'Pop Culture',
+                        icon: 'fa-film',
+                        color: 'from-pink-500/20 to-purple-600/20 border-pink-500/40 text-pink-300',
+                        items: [
+                            'Superhero', 'Video Game', 'Anime', 'Social Media', 'Podcast',
+                            'Streaming', 'Red Carpet', 'Billboard Hot 100', 'Movie Theater', 'Celebrity',
+                            'Meme', 'Virtual Reality', 'Pop Music', 'Comic Book', 'Hollywood',
+                            'Reality TV', 'Award Show', 'Viral Video', 'Paparazzi', 'Soundtrack',
+                            'E-Sports', 'Fandom', 'Cosplay', 'Blockbuster', 'TikTok',
+                            'Streaming Series', 'Influencer', 'Box Office', 'Concert Tour', 'Grammy Awards'
+                        ]
+                    },
+                    geography: {
+                        name: 'World Geography',
+                        icon: 'fa-earth-americas',
+                        color: 'from-emerald-500/20 to-teal-600/20 border-emerald-500/40 text-emerald-300',
+                        items: [
+                            'Amazon Rainforest', 'Mount Everest', 'Sahara Desert', 'Pacific Ocean', 'Equator',
+                            'Volcano', 'Glacier', 'Peninsula', 'Archipelago', 'Grand Canyon',
+                            'Great Barrier Reef', 'Capital City', 'Latitude', 'Longitude', 'Compass Rose',
+                            'Continent', 'Island', 'Mountain Range', 'River Delta', 'Waterfall',
+                            'Tundra', 'Savanna', 'Fjord', 'Geysers', 'Coral Reef',
+                            'Rainforest', 'Strait', 'Oasis', 'Earthquake Fault', 'Time Zone'
+                        ]
+                    },
+                    history: {
+                        name: 'History & World',
+                        icon: 'fa-landmark',
+                        color: 'from-amber-500/20 to-orange-600/20 border-amber-500/40 text-amber-300',
+                        items: [
+                            'Ancient Pyramids', 'Industrial Revolution', 'Renaissance', 'The Silk Road', 'Space Race',
+                            'Declaration of Independence', 'Medieval Castle', 'The Colosseum', 'Ancient Greece', 'Viking Voyage',
+                            'Printing Press', 'Moon Landing', 'Gold Rush', 'American Revolution', 'World War II',
+                            'Code of Hammurabi', 'Pharaoh', 'Knight', 'Pioneer', 'Steam Engine',
+                            'Hieroglyphics', 'Great Wall of China', 'Magna Carta', 'Taj Mahal', 'Monarchy',
+                            'Civil Rights Movement', 'Stone Age', 'Sinking of the Titanic', 'Olympic Games Origin', 'Archaeology'
+                        ]
+                    },
+                    animals: {
+                        name: 'Animals & Wildlife',
+                        icon: 'fa-paw',
+                        color: 'from-yellow-500/20 to-amber-600/20 border-yellow-500/40 text-yellow-300',
+                        items: [
+                            'Cheetah', 'Blue Whale', 'Chameleon', 'Bald Eagle', 'Emperor Penguin',
+                            'Kangaroo', 'Octopus', 'Platypus', 'Grizzly Bear', 'Electric Eel',
+                            'Komodo Dragon', 'Hummingbird', 'Sloth', 'Arctic Wolf', 'Giant Panda',
+                            'Sea Turtle', 'Great White Shark', 'Giraffe', 'Chimpanzee', 'Flamingo',
+                            'Beaver', 'Orca', 'Ostrich', 'Meerkats', 'Red Panda',
+                            'Peregrine Falcon', 'Hippopotamus', 'Snow Leopard', 'Narwhal', 'Dolphin'
+                        ]
+                    },
+                    food: {
+                        name: 'Food & Culinary',
+                        icon: 'fa-utensils',
+                        color: 'from-rose-500/20 to-red-600/20 border-rose-500/40 text-rose-300',
+                        items: [
+                            'Neapolitan Pizza', 'Sushi Roll', 'Tacos', 'Croissant', 'Chocolate Fondue',
+                            'Pasta Carbonara', 'Cheeseburger', 'Ice Cream Sundae', 'Guacamole', 'Ramen',
+                            'Dim Sum', 'Paella', 'Apple Pie', 'Waffles', 'Barbecue Ribs',
+                            'Pad Thai', 'Falafel', 'Pancakes', 'Bagel & Cream Cheese', 'Crêpe',
+                            'Smoothie Bowl', 'Lasagna', 'Dumplings', 'Curry', 'Churros',
+                            'Fondue', 'Macarons', 'Pretzel', 'Tiramisu', 'Fish and Chips'
+                        ]
+                    },
+                    literature: {
+                        name: 'Literature & Stories',
+                        icon: 'fa-book',
+                        color: 'from-indigo-500/20 to-purple-600/20 border-indigo-500/40 text-indigo-300',
+                        items: [
+                            'Fairy Tale', 'Mythology', 'Protagonist', 'Plot Twist', 'Metaphor',
+                            'Novel', 'Biography', 'Poetry', 'Shakespeare', 'Graphic Novel',
+                            'Fable', 'Antagonist', 'Symbolism', 'Rhyme Scheme', 'Climax',
+                            'Legend', 'Epic Poem', 'Character Arc', 'Setting', 'Theme',
+                            'Dialogue', 'Alliteration', 'Onomatopoeia', 'Genre', 'Flashback',
+                            'Irony', 'Moral of the Story', 'Narrator', 'Hyperbole', 'Sonnet'
+                        ]
+                    },
+                    brainrot: {
+                        name: 'Brain Rot & Memes',
+                        icon: 'fa-skull',
+                        color: 'from-fuchsia-500/20 to-pink-600/20 border-fuchsia-500/40 text-fuchsia-300',
+                        items: [
+                            'Skibidi Toilet', 'The Rizzler', 'Baby Gronk', 'Kai Cenat', 'Fanum',
+                            'Grimace', 'Smurf Cat', 'Roblox Noob', 'Bacon Hair', 'CaseOh',
+                            'IShowSpeed', 'GigaChad', 'Quandale Dingle', 'NPC Streamer', 'John Pork',
+                            'Capybara', 'Hasbulla', 'Vector', 'Sigma Male', 'Mewing'
+                        ]
+                    },
+                    gaming: {
+                        name: 'Fortnite, Roblox & Minecraft',
+                        icon: 'fa-gamepad',
+                        color: 'from-indigo-500/20 to-cyan-600/20 border-indigo-500/40 text-cyan-300',
+                        items: [
+                            'Victory Royale', 'Battle Bus', 'Chug Jug', 'V-Bucks', 'Tilted Towers',
+                            'Boogie Bomb', 'Peely the Banana', 'Supply Llama', 'Slurp Juice', 'Fortnite Glider',
+                            'Robux', 'Adopt Me!', 'Blox Fruits', 'Brookhaven RP', 'Roblox Obby',
+                            'Bacon Hair', 'Doors', 'Tower of Hell', 'Rainbow Friends', 'Dominus Hat',
+                            'Creeper', 'Diamond Pickaxe', 'Ender Dragon', 'Nether Portal', 'Steve & Alex',
+                            'Redstone Dust', 'Herobrine', 'Crafting Table', 'Enchantment Table', 'Enderman'
+                        ]
+                    }
+                };
+            }
+
+            loadCustomDecks() {
+                try {
+                    const data = localStorage.getItem('topic_master_custom_decks');
+                    return data ? JSON.parse(data) : {};
+                } catch(e) {
+                    return {};
+                }
+            }
+
+            saveCustomDeck() {
+                const nameInput = document.getElementById('customDeckName');
+                const itemsInput = document.getElementById('customDeckItems');
+
+                const name = nameInput ? nameInput.value.trim() : '';
+                const itemsRaw = itemsInput ? itemsInput.value.trim() : '';
+
+                if (!name) {
+                    this.showToast('Please enter a deck name', 'error');
+                    return;
+                }
+
+                const lines = itemsRaw.split('\n').filter(l => l.trim().length > 0);
+                if (lines.length === 0) {
+                    this.showToast('Please enter at least one topic', 'error');
+                    return;
+                }
+
+                const key = 'custom_' + Date.now();
+                this.customDecks[key] = {
+                    name: name,
+                    icon: 'fa-folder-plus',
+                    color: 'from-indigo-500/20 to-violet-600/20 border-indigo-500/40 text-indigo-300',
+                    isCustom: true,
+                    items: lines
+                };
+
+                try {
+                    localStorage.setItem('topic_master_custom_decks', JSON.stringify(this.customDecks));
+                    this.showToast(`Custom deck "${name}" saved!`, 'success');
+                    if (nameInput) nameInput.value = '';
+                    if (itemsInput) itemsInput.value = '';
+                    this.closeCustomDeckModal();
+                    this.renderDecks();
+                    this.selectDeck(key);
+                } catch(e) {
+                    this.showToast('Failed to save custom deck', 'error');
+                }
+            }
+
+            clearCustomDecks() {
+                this.customDecks = {};
+                try {
+                    localStorage.removeItem('topic_master_custom_decks');
+                    this.showToast('All custom decks deleted', 'info');
+                    this.renderDecks();
+                    this.selectDeck('science');
+                } catch(e) {}
+            }
+
+            getAllDecks() {
+                return { ...this.getPresetDecks(), ...this.customDecks };
+            }
+
+            renderDecks() {
+                const grid = document.getElementById('deckGrid');
+                if (!grid) return;
+
+                const allDecks = this.getAllDecks();
+                const keys = Object.keys(allDecks);
+
+                const badge = document.getElementById('deckCountBadge');
+                if (badge) badge.textContent = `${keys.length} Decks Available`;
+
+                grid.innerHTML = keys.map(key => {
+                    const d = allDecks[key];
+                    const isSelected = this.selectedDeckKey === key;
+                    return `
+                        <div onclick="app.selectDeck('${key}')" class="cursor-pointer rounded-2xl p-4 bg-gradient-to-br ${d.color} border-2 transition-all transform hover:-translate-y-1 ${
+                            isSelected ? 'ring-4 ring-cyan-400 scale-[1.02] shadow-xl shadow-cyan-500/20' : 'opacity-80 hover:opacity-100'
+                        } flex flex-col justify-between h-32 relative overflow-hidden">
+                            <div class="flex items-center justify-between">
+                                <i class="fa-solid ${d.icon} text-2xl"></i>
+                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-950/60 border border-white/10">
+                                    ${d.items.length} Items
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-sm text-white font-heading leading-snug line-clamp-2">${d.name}</h4>
+                                ${d.isCustom ? '<span class="text-[9px] text-indigo-300 font-bold uppercase tracking-wider">Custom</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            selectDeck(key) {
+                this.selectedDeckKey = key;
+                this.renderDecks();
+            }
+
+            setTimerDuration(sec) {
+                this.timerDuration = sec;
+                document.querySelectorAll('.timer-btn').forEach(btn => {
+                    const time = parseInt(btn.getAttribute('data-time'), 10);
+                    if (time === sec) {
+                        btn.className = 'timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-cyan-600 text-white border border-cyan-400 shadow-lg shadow-cyan-500/20';
+                    } else {
+                        btn.className = 'timer-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700';
+                    }
+                });
+            }
+
+            // Gameplay Mechanics
+            startGame() {
+                const allDecks = this.getAllDecks();
+                const deck = allDecks[this.selectedDeckKey];
+
+                if (!deck || !deck.items || deck.items.length === 0) {
+                    this.showToast('Selected deck is empty or invalid', 'error');
+                    return;
+                }
+
+                this.activeItems = [...deck.items].sort(() => Math.random() - 0.5);
+                this.currentIndex = 0;
+                this.roundScore = 0;
+                this.hotseatCorrect = 0;
+                this.hotseatPassed = 0;
+
+                const playingTeamName = this.teams[this.activePlayingTeamIndex] 
+                    ? this.teams[this.activePlayingTeamIndex].name 
+                    : 'Team 1';
+
+                const headerBadge = document.getElementById('activeTeamHeaderBadge');
+                if (headerBadge) headerBadge.textContent = playingTeamName;
+
+                this.initHotseatGame(deck);
+            }
+
+            initHotseatGame(deck) {
+                this.showScreen('hotseat');
+                document.getElementById('activeDeckBadge').textContent = deck.name;
+                this.updateHotseatStats();
+
+                this.timerLeft = this.timerDuration;
+                this.isPaused = false;
+                this.startTimer();
+
+                this.showCurrentHotseatWord();
+            }
+
+            showCurrentHotseatWord() {
+                const wordElement = document.getElementById('hotseatWord');
+                if (!wordElement) return;
+
+                if (this.currentIndex >= this.activeItems.length) {
+                    this.finishRound();
+                    return;
+                }
+
+                const currentItem = this.activeItems[this.currentIndex];
+                const wordText = typeof currentItem === 'string' ? currentItem : currentItem.word || currentItem;
+
+                wordElement.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    wordElement.textContent = wordText;
+                    wordElement.classList.remove('scale-95', 'opacity-0');
+                }, 100);
+            }
+
+            updateHotseatStats() {
+                const correctEl = document.getElementById('hotseatCorrectCount');
+                const passedEl = document.getElementById('hotseatPassedCount');
+                if (correctEl) correctEl.textContent = this.hotseatCorrect;
+                if (passedEl) passedEl.textContent = this.hotseatPassed;
+            }
+
+            correctHotseatWord() {
+                this.sound.playCorrect();
+                this.hotseatCorrect++;
+                this.roundScore += 100;
+                this.updateHotseatStats();
+                this.currentIndex++;
+                this.showCurrentHotseatWord();
+            }
+
+            passHotseatWord() {
+                this.sound.playPass();
+                this.hotseatPassed++;
+                this.updateHotseatStats();
+                this.currentIndex++;
+                this.showCurrentHotseatWord();
+            }
+
+            startTimer() {
+                this.stopTimer();
+                const display = document.getElementById('timerDisplay');
+                
+                if (this.timerDuration === 0) {
+                    if (display) display.textContent = '∞';
+                    return;
+                }
+
+                const updateDisplay = () => {
+                    if (display) display.textContent = `${this.timerLeft}s`;
+                };
+
+                updateDisplay();
+
+                this.timerInterval = setInterval(() => {
+                    if (this.isPaused) return;
+
+                    this.timerLeft--;
+                    updateDisplay();
+
+                    if (this.timerLeft <= 5 && this.timerLeft > 0) {
+                        this.sound.playTick();
+                    }
+
+                    if (this.timerLeft <= 0) {
+                        this.stopTimer();
+                        this.finishRound();
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            toggleTimerPause() {
+                if (this.timerDuration === 0) return;
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('pauseBtn');
+                if (btn) {
+                    btn.innerHTML = this.isPaused ? '<i class="fa-solid fa-play text-emerald-400"></i>' : '<i class="fa-solid fa-pause"></i>';
+                }
+                this.showToast(this.isPaused ? 'Timer Paused' : 'Timer Resumed', 'info');
+            }
+
+            finishRound() {
+                this.stopTimer();
+                this.sound.playFanfare();
+                this.confetti.fire();
+
+                this.targetAwardTeamIndex = this.activePlayingTeamIndex;
+
+                document.getElementById('summaryCorrect').textContent = this.hotseatCorrect;
+                document.getElementById('summaryPassed').textContent = this.hotseatPassed;
+                document.getElementById('summaryRoundScore').textContent = `+${this.roundScore} Pts`;
+
+                this.renderSummaryTeamSelector();
+
+                const modal = document.getElementById('roundSummaryModal');
+                if (modal) modal.classList.remove('hidden');
+            }
+
+            renderSummaryTeamSelector() {
+                const container = document.getElementById('summaryTeamSelector');
+                if (!container) return;
+
+                container.innerHTML = this.teams.map((t, idx) => `
+                    <button onclick="app.selectTargetTeam(${idx})" class="px-4 py-2 rounded-xl text-xs font-bold transition border ${
+                        this.targetAwardTeamIndex === idx 
+                        ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/20' 
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }">
+                        ${t.name}
+                    </button>
+                `).join('');
+            }
+
+            selectTargetTeam(idx) {
+                if (idx >= 0 && idx < this.teams.length) {
+                    this.targetAwardTeamIndex = idx;
+                    this.renderSummaryTeamSelector();
+                }
+            }
+
+            saveRoundScoreAndReturn() {
+                const awardedTeam = this.teams[this.targetAwardTeamIndex];
+                if (awardedTeam) {
+                    awardedTeam.score += this.roundScore;
+                }
+
+                this.activePlayingTeamIndex = (this.activePlayingTeamIndex + 1) % this.teams.length;
+
+                this.renderScoreboard();
+                this.renderActiveTeamPicker();
+
+                const modal = document.getElementById('roundSummaryModal');
+                if (modal) modal.classList.add('hidden');
+
+                if (awardedTeam && awardedTeam.score >= this.winningScore) {
+                    this.triggerVictory(awardedTeam);
+                } else {
+                    this.showScreen('menu');
+                    this.showToast(`Saved +${this.roundScore} Pts! Next up: ${this.teams[this.activePlayingTeamIndex].name}`, 'success');
+                }
+            }
+
+            triggerVictory(winningTeam) {
+                this.sound.playFanfare();
+                this.confetti.fire();
+                setTimeout(() => this.confetti.fire(), 600);
+                setTimeout(() => this.confetti.fire(), 1200);
+
+                const nameEl = document.getElementById('winnerTeamName');
+                const subtextEl = document.getElementById('winnerScoreSubtext');
+                const standingsEl = document.getElementById('winnerStandingsList');
+
+                if (nameEl) nameEl.textContent = `${winningTeam.name.toUpperCase()} WINS!`;
+                if (subtextEl) subtextEl.textContent = `Reached ${winningTeam.score.toLocaleString()} points (Target: ${this.winningScore.toLocaleString()} Pts)!`;
+
+                if (standingsEl) {
+                    const sortedTeams = [...this.teams].sort((a, b) => b.score - a.score);
+                    standingsEl.innerHTML = sortedTeams.map((t, idx) => `
+                        <div class="flex items-center justify-between p-2 rounded-xl ${t.name === winningTeam.name ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black' : 'bg-slate-900 text-slate-300'}">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-extrabold text-slate-400 w-5">#${idx + 1}</span>
+                                <span class="font-bold">${t.name}</span>
+                            </div>
+                            <span class="font-black font-heading text-sm">${t.score.toLocaleString()} pts</span>
+                        </div>
+                    `).join('');
+                }
+
+                const modal = document.getElementById('winnerModal');
+                if (modal) modal.classList.remove('hidden');
+            }
+
+            closeWinnerModalAndReset() {
+                const modal = document.getElementById('winnerModal');
+                if (modal) modal.classList.add('hidden');
+                this.resetScores();
+                this.showScreen('menu');
+            }
+
+            discardRoundAndReturn() {
+                const modal = document.getElementById('roundSummaryModal');
+                if (modal) modal.classList.add('hidden');
+                this.showScreen('menu');
+            }
+
+            toggleSound() {
+                const isMuted = this.sound.toggle();
+                const icon = document.getElementById('soundIcon');
+                if (icon) {
+                    icon.className = isMuted 
+                        ? 'fa-solid fa-volume-xmark text-rose-400' 
+                        : 'fa-solid fa-volume-high text-cyan-400';
+                }
+                this.showToast(isMuted ? 'Sound Muted' : 'Sound Enabled', 'info');
+            }
+
+            openRulesModal() {
+                const m = document.getElementById('rulesModal');
+                if (m) m.classList.remove('hidden');
+            }
+
+            closeRulesModal() {
+                const m = document.getElementById('rulesModal');
+                if (m) m.classList.add('hidden');
+            }
+
+            openCustomDeckModal() {
+                const m = document.getElementById('customDeckModal');
+                if (m) m.classList.remove('hidden');
+            }
+
+            closeCustomDeckModal() {
+                const m = document.getElementById('customDeckModal');
+                if (m) m.classList.add('hidden');
+            }
+
+            showScreen(screenName) {
+                this.currentScreen = screenName;
+                document.getElementById('menuScreen').classList.add('hidden');
+                document.getElementById('hotseatScreen').classList.add('hidden');
+
+                if (screenName === 'menu') {
+                    document.getElementById('menuScreen').classList.remove('hidden');
+                    this.renderActiveTeamPicker();
+                    this.sound.startMenuBGM();
+                } else if (screenName === 'hotseat') {
+                    document.getElementById('hotseatScreen').classList.remove('hidden');
+                    document.getElementById('hotseatScreen').classList.add('flex');
+                    this.sound.stopMenuBGM();
+                }
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                }
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toastNotification');
+                const msgEl = document.getElementById('toastMessage');
+                const iconEl = document.getElementById('toastIcon');
+
+                if (!toast || !msgEl || !iconEl) return;
+
+                msgEl.textContent = message;
+
+                if (type === 'error') {
+                    iconEl.className = 'fa-solid fa-circle-exclamation text-rose-400 text-lg';
+                } else if (type === 'success') {
+                    iconEl.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+                } else {
+                    iconEl.className = 'fa-solid fa-circle-info text-cyan-400 text-lg';
+                }
+
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 2500);
+            }
+
+            setupKeyboardListeners() {
+                window.addEventListener('keydown', (e) => {
+                    const hotseatVisible = !document.getElementById('hotseatScreen').classList.contains('hidden');
+                    
+                    if (hotseatVisible) {
+                        if (e.code === 'ArrowRight' || e.key.toLowerCase() === 'c') {
+                            e.preventDefault();
+                            this.correctHotseatWord();
+                        } else if (e.code === 'ArrowLeft' || e.key.toLowerCase() === 'x' || e.code === 'Space') {
+                            e.preventDefault();
+                            this.passHotseatWord();
+                        } else if (e.key.toLowerCase() === 'p') {
+                            e.preventDefault();
+                            this.toggleTimerPause();
+                        }
+                    }
+
+                    if (e.key.toLowerCase() === 'm') {
+                        this.toggleSound();
+                    }
+                    if (e.key.toLowerCase() === 'b') {
+                        this.toggleMusic();
+                    }
+                });
+            }
+        }
+
+        // Instant initialization bound globally to window.app
+        window.app = new ClassroomGameApp();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            window.app.init();
+        });
+    </script>
+</body>
+</html>
